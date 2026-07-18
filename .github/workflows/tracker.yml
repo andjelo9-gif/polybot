@@ -5,6 +5,11 @@ on:
   schedule:
     - cron: "*/30 * * * *"
   workflow_dispatch:
+    inputs:
+      test:
+        description: "Send a test Discord notification instead of polling"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -41,7 +46,7 @@ jobs:
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           TZ: Europe/Lisbon
-        run: python polymarket_tracker.py --once
+        run: python polymarket_tracker.py ${{ inputs.test && '--test' || '--once' }}
 
       - name: Save tracker state
         if: always()
