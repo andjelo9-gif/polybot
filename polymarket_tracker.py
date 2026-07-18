@@ -68,6 +68,9 @@ MIN_USDC_SIZE = 0          # ignore trades smaller than this (USD); 0 = keep all
 # and provide it via the DISCORD_WEBHOOK_URL environment variable.
 DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL", "")
 
+# Numeric Discord user ID to ping in every alert (empty = no ping).
+DISCORD_MENTION_USER_ID = os.getenv("DISCORD_MENTION_USER_ID", "")
+
 STATE_FILE = Path(os.getenv("STATE_FILE", "tracker_state.json"))
 
 # ──────────────────────────────────────────────────────────────
@@ -172,6 +175,8 @@ def format_alert(match: dict) -> str:
 
 
 def notify(message: str) -> None:
+    if DISCORD_MENTION_USER_ID:
+        message = f"<@{DISCORD_MENTION_USER_ID}> " + message
     if not DISCORD_WEBHOOK_URL:
         print("[alert - no notifier configured]\n" + message)
         return

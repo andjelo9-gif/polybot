@@ -45,6 +45,7 @@ jobs:
       - name: Run tracker
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DISCORD_MENTION_USER_ID: ${{ vars.DISCORD_MENTION_USER_ID }}
           TZ: Europe/Lisbon
         run: python polymarket_tracker.py ${{ inputs.test && '--test' || '--once' }}
 
