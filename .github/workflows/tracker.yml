@@ -46,8 +46,18 @@ jobs:
         env:
           DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
           DISCORD_MENTION_USER_ID: ${{ vars.DISCORD_MENTION_USER_ID }}
+          APP_API_URL: ${{ vars.APP_API_URL }}
+          TRACKER_API_SECRET: ${{ secrets.TRACKER_API_SECRET }}
           TZ: Europe/Lisbon
         run: python polymarket_tracker.py ${{ inputs.test && '--test' || '--once' }}
+
+      - name: Resolve pending signals
+        if: ${{ !inputs.test && vars.APP_API_URL != '' }}
+        env:
+          APP_API_URL: ${{ vars.APP_API_URL }}
+          TRACKER_API_SECRET: ${{ secrets.TRACKER_API_SECRET }}
+          TZ: Europe/Lisbon
+        run: python resolve_signals.py
 
       - name: Save tracker state
         if: always()

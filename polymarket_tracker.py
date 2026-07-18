@@ -71,6 +71,11 @@ DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL", "")
 # Numeric Discord user ID to ping in every alert (empty = no ping).
 DISCORD_MENTION_USER_ID = os.getenv("DISCORD_MENTION_USER_ID", "")
 
+# Companion web app (Vercel). When configured, the wallet list comes from the
+# app's DB and every signal is recorded there for win/loss tracking.
+APP_API_URL = os.getenv("APP_API_URL", "").rstrip("/")
+TRACKER_API_SECRET = os.getenv("TRACKER_API_SECRET", "")
+
 STATE_FILE = Path(os.getenv("STATE_FILE", "tracker_state.json"))
 
 # ──────────────────────────────────────────────────────────────
@@ -186,11 +191,68 @@ def notify(message: str) -> None:
         print(f"[warn] Discord notify failed: {e}", file=sys.stderr)
 
 
+def app_configured() -> bool:
+    return bool(APP_API_URL and TRACKER_API_SECRET)
+
+
+def fetch_tracked_wallets() -> list[str]:
+    """Wallet list from the web app, falling back to the local config."""
+    if app_configured():
+        try:
+            r = requests.get(
+                f"{APP_API_URL}/api/tracker/wallets",
+                headers={"x-tracker-secret": TRACKER_API_SECRET},
+                timeout=15,
+            )
+            r.raise_for_status()
+            wallets = r.json()["wallets"]
+            if wallets:
+                return wallets
+        except (requests.RequestException, KeyError, ValueError) as e:
+            print(f"[warn] wallet fetch from app failed, using local list: {e}",
+                  file=sys.stderr)
+    return TRACKED_WALLETS
+
+
+def record_signal(match: dict) -> None:
+    """Store an alert in the web app for win/loss tracking. Never fatal."""
+    if not app_configured():
+        return
+    t0 = match["trades"][0]
+    payload = {
+        "condition_id": t0["conditionId"],
+        "outcome_index": t0["outcomeIndex"],
+        "side": t0["side"],
+        "outcome_name": t0.get("outcome"),
+        "title": t0.get("title"),
+        "event_slug": t0.get("eventSlug"),
+        "trades": [
+            {
+                "wallet": t["proxyWallet"],
+                "price": t["price"],
+                "usdc_size": t["usdcSize"],
+                "timestamp": t["timestamp"],
+            }
+            for t in match["trades"]
+        ],
+    }
+    try:
+        r = requests.post(
+            f"{APP_API_URL}/api/tracker/signals",
+            headers={"x-tracker-secret": TRACKER_API_SECRET},
+            json=payload,
+            timeout=15,
+        )
+        r.raise_for_status()
+    except requests.RequestException as e:
+        print(f"[warn] failed to record signal in app: {e}", file=sys.stderr)
+
+
 def run_check(state: dict) -> None:
     now = int(time.time())
     window_start = now - TIME_WINDOW_HOURS * 3600
 
-    for wallet in TRACKED_WALLETS:
+    for wallet in fetch_tracked_wallets():
         try:
             for t in fetch_trades(wallet, window_start):
                 if t.get("usdcSize", 0) < MIN_USDC_SIZE:
@@ -208,6 +270,7 @@ def run_check(state: dict) -> None:
         msg = format_alert(match)
         print(msg)
         notify(msg)
+        record_signal(match)
 
     save_state(state)
 
