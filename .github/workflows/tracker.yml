@@ -1,3 +1,4 @@
+# Polls Polymarket for copy-bet alerts; state persists between runs via cache.
 name: Polymarket tracker
 
 on:
