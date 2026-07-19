@@ -1,13 +1,24 @@
 import { sql, type Signal } from "@/lib/db";
 import { decimalOdds, lisbonTime } from "@/lib/format";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export const dynamic = "force-dynamic";
 
+const HEAD = "font-mono text-[11px] uppercase tracking-wider text-muted-foreground";
+
 const BADGE: Record<Signal["status"], string> = {
-  pending: "bg-zinc-800 text-zinc-300",
-  won: "bg-emerald-950 text-emerald-400",
-  lost: "bg-red-950 text-red-400",
-  void: "bg-zinc-800 text-zinc-500",
+  pending: "text-muted-foreground",
+  won: "border-emerald-500/30 text-emerald-400",
+  lost: "border-red-500/30 text-red-400",
+  void: "text-muted-foreground/60",
 };
 
 export default async function SignalsPage() {
@@ -22,23 +33,23 @@ export default async function SignalsPage() {
 
   return (
     <main className="space-y-6">
-      <h1 className="text-2xl font-semibold">Signals</h1>
-      <div className="overflow-x-auto rounded-xl border border-zinc-800">
-        <table className="w-full text-sm">
-          <thead className="bg-zinc-900 text-left text-zinc-400">
-            <tr>
-              <th className="px-4 py-3 font-medium">Market</th>
-              <th className="px-4 py-3 font-medium">Bet</th>
-              <th className="px-4 py-3 font-medium">Odds</th>
-              <th className="px-4 py-3 font-medium">Wallets</th>
-              <th className="px-4 py-3 font-medium">First trade</th>
-              <th className="px-4 py-3 font-medium">Result</th>
-            </tr>
-          </thead>
-          <tbody>
+      <h1 className="text-xl font-semibold">Signals</h1>
+      <div className="rounded-lg border">
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className={HEAD}>Market</TableHead>
+              <TableHead className={HEAD}>Bet</TableHead>
+              <TableHead className={HEAD}>Odds</TableHead>
+              <TableHead className={HEAD}>Wallets</TableHead>
+              <TableHead className={HEAD}>First trade</TableHead>
+              <TableHead className={HEAD}>Result</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {signals.map((s) => (
-              <tr key={s.id} className="border-t border-zinc-800/70">
-                <td className="max-w-md px-4 py-3">
+              <TableRow key={s.id}>
+                <TableCell className="max-w-md truncate px-4">
                   {s.event_slug ? (
                     <a
                       href={`https://polymarket.com/event/${s.event_slug}`}
@@ -50,32 +61,34 @@ export default async function SignalsPage() {
                   ) : (
                     (s.title ?? s.condition_id)
                   )}
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap">
+                </TableCell>
+                <TableCell>
                   {s.side} “{s.outcome_name ?? `#${s.outcome_index}`}”
-                </td>
-                <td className="px-4 py-3">{decimalOdds(s.avg_price)}</td>
-                <td className="px-4 py-3">{s.wallet_count}</td>
-                <td className="px-4 py-3 whitespace-nowrap text-zinc-400">
+                </TableCell>
+                <TableCell className="font-mono text-xs">
+                  {decimalOdds(s.avg_price)}
+                </TableCell>
+                <TableCell className="font-mono text-xs">{s.wallet_count}</TableCell>
+                <TableCell className="font-mono text-xs text-muted-foreground">
                   {lisbonTime(s.first_trade_at)}
-                </td>
-                <td className="px-4 py-3">
-                  <span className={`rounded-full px-2.5 py-1 text-xs ${BADGE[s.status]}`}>
+                </TableCell>
+                <TableCell>
+                  <Badge variant="outline" className={`font-mono uppercase ${BADGE[s.status]}`}>
                     {s.status}
-                  </span>
-                </td>
-              </tr>
+                  </Badge>
+                </TableCell>
+              </TableRow>
             ))}
             {signals.length === 0 && (
-              <tr>
-                <td colSpan={6} className="px-4 py-8 text-center text-zinc-500">
+              <TableRow>
+                <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
                   No signals yet — they appear when enough tracked wallets place
                   the same bet.
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </main>
   );

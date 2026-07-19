@@ -1,7 +1,17 @@
 import { sql } from "@/lib/db";
 import { flatStakeProfit, money } from "@/lib/format";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export const dynamic = "force-dynamic";
+
+const HEAD = "font-mono text-[11px] uppercase tracking-wider text-muted-foreground";
 
 type Row = {
   wallet: string;
@@ -56,28 +66,28 @@ export default async function LeaderboardPage() {
 
   return (
     <main className="space-y-6">
-      <h1 className="text-2xl font-semibold">Wallet leaderboard</h1>
-      <p className="text-sm text-zinc-400">
+      <h1 className="text-xl font-semibold">Wallet leaderboard</h1>
+      <p className="text-sm text-muted-foreground">
         Hypothetical result of betting a flat $100 on every resolved signal the
         wallet participated in, at that wallet’s own entry price.
       </p>
-      <div className="overflow-x-auto rounded-xl border border-zinc-800">
-        <table className="w-full text-sm">
-          <thead className="bg-zinc-900 text-left text-zinc-400">
-            <tr>
-              <th className="px-4 py-3 font-medium">Wallet</th>
-              <th className="px-4 py-3 font-medium">Signals</th>
-              <th className="px-4 py-3 font-medium">W–L</th>
-              <th className="px-4 py-3 font-medium">Win %</th>
-              <th className="px-4 py-3 font-medium">P/L ($100 flat)</th>
-            </tr>
-          </thead>
-          <tbody>
+      <div className="rounded-lg border">
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className={HEAD}>Wallet</TableHead>
+              <TableHead className={HEAD}>Signals</TableHead>
+              <TableHead className={HEAD}>W–L</TableHead>
+              <TableHead className={HEAD}>Win %</TableHead>
+              <TableHead className={HEAD}>P/L ($100 flat)</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {leaderboard.map((s) => {
               const resolved = s.wins + s.losses;
               return (
-                <tr key={s.wallet} className="border-t border-zinc-800/70">
-                  <td className="px-4 py-3">
+                <TableRow key={s.wallet}>
+                  <TableCell className="px-4">
                     <a
                       href={`https://polymarket.com/profile/${s.wallet}`}
                       target="_blank"
@@ -86,18 +96,20 @@ export default async function LeaderboardPage() {
                       {s.label ?? `${s.wallet.slice(0, 10)}…`}
                     </a>
                     {!s.active && (
-                      <span className="ml-2 text-xs text-zinc-500">(paused)</span>
+                      <span className="ml-2 font-mono text-xs text-muted-foreground">
+                        (paused)
+                      </span>
                     )}
-                  </td>
-                  <td className="px-4 py-3">{s.signals}</td>
-                  <td className="px-4 py-3">
+                  </TableCell>
+                  <TableCell className="font-mono text-xs">{s.signals}</TableCell>
+                  <TableCell className="font-mono text-xs">
                     {s.wins}–{s.losses}
-                  </td>
-                  <td className="px-4 py-3">
+                  </TableCell>
+                  <TableCell className="font-mono text-xs">
                     {resolved ? `${((100 * s.wins) / resolved).toFixed(0)}%` : "—"}
-                  </td>
-                  <td
-                    className={`px-4 py-3 font-medium ${
+                  </TableCell>
+                  <TableCell
+                    className={`font-mono text-xs font-medium ${
                       s.profit > 0
                         ? "text-emerald-400"
                         : s.profit < 0
@@ -106,20 +118,20 @@ export default async function LeaderboardPage() {
                     }`}
                   >
                     {money(s.profit)}
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               );
             })}
             {leaderboard.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-zinc-500">
+              <TableRow>
+                <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
                   No resolved signals yet — the leaderboard fills in as markets
                   settle.
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
     </main>
   );

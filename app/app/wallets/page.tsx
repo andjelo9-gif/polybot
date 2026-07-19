@@ -1,7 +1,21 @@
 import { sql, type Wallet } from "@/lib/db";
 import { addWallet, removeWallet, toggleWallet } from "./actions";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export const dynamic = "force-dynamic";
+
+const HEAD = "font-mono text-[11px] uppercase tracking-wider text-muted-foreground";
 
 export default async function WalletsPage() {
   const wallets = (await sql`
@@ -15,95 +29,98 @@ export default async function WalletsPage() {
 
   return (
     <main className="space-y-8">
-      <h1 className="text-2xl font-semibold">Tracked wallets</h1>
+      <h1 className="text-xl font-semibold">Tracked wallets</h1>
 
       <form action={addWallet} className="flex flex-wrap items-end gap-3">
-        <label className="flex flex-col gap-1 text-sm text-zinc-400">
-          Address
-          <input
+        <div className="grid gap-1.5">
+          <Label htmlFor="address" className="text-muted-foreground">
+            Address
+          </Label>
+          <Input
+            id="address"
             name="address"
             required
             pattern="0x[0-9a-fA-F]{40}"
             placeholder="0x…"
-            className="w-96 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 font-mono text-sm text-zinc-100 outline-none focus:border-zinc-400"
+            className="w-96 font-mono text-xs"
           />
-        </label>
-        <label className="flex flex-col gap-1 text-sm text-zinc-400">
-          Label (optional)
-          <input
-            name="label"
-            placeholder="nickname"
-            className="w-40 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-100 outline-none focus:border-zinc-400"
-          />
-        </label>
-        <button
-          type="submit"
-          className="rounded-md bg-zinc-100 px-4 py-2 text-sm font-medium text-zinc-900 hover:bg-white"
-        >
-          Add wallet
-        </button>
+        </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor="label" className="text-muted-foreground">
+            Label (optional)
+          </Label>
+          <Input id="label" name="label" placeholder="nickname" className="w-40" />
+        </div>
+        <Button type="submit">Add wallet</Button>
       </form>
 
-      <div className="overflow-x-auto rounded-xl border border-zinc-800">
-        <table className="w-full text-sm">
-          <thead className="bg-zinc-900 text-left text-zinc-400">
-            <tr>
-              <th className="px-4 py-3 font-medium">Label</th>
-              <th className="px-4 py-3 font-medium">Address</th>
-              <th className="px-4 py-3 font-medium">Signals</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3" />
-            </tr>
-          </thead>
-          <tbody>
+      <div className="rounded-lg border">
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className={HEAD}>Label</TableHead>
+              <TableHead className={HEAD}>Address</TableHead>
+              <TableHead className={HEAD}>Signals</TableHead>
+              <TableHead className={HEAD}>Status</TableHead>
+              <TableHead />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {wallets.map((w) => (
-              <tr key={w.address} className="border-t border-zinc-800/70">
-                <td className="px-4 py-3">{w.label ?? "—"}</td>
-                <td className="px-4 py-3 font-mono text-xs">
+              <TableRow key={w.address}>
+                <TableCell className="px-4">{w.label ?? "—"}</TableCell>
+                <TableCell className="font-mono text-xs text-muted-foreground">
                   <a
                     href={`https://polymarket.com/profile/${w.address}`}
                     target="_blank"
-                    className="hover:underline"
+                    className="hover:text-foreground hover:underline"
                   >
                     {w.address}
                   </a>
-                </td>
-                <td className="px-4 py-3">{w.signal_count}</td>
-                <td className="px-4 py-3">
-                  <span className={w.active ? "text-emerald-400" : "text-zinc-500"}>
+                </TableCell>
+                <TableCell className="font-mono text-xs">{w.signal_count}</TableCell>
+                <TableCell>
+                  <Badge
+                    variant="outline"
+                    className={
+                      w.active
+                        ? "border-emerald-500/30 font-mono text-emerald-400 uppercase"
+                        : "font-mono text-muted-foreground uppercase"
+                    }
+                  >
                     {w.active ? "active" : "paused"}
-                  </span>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="flex justify-end gap-2">
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <div className="flex justify-end gap-2 pr-2">
                     <form action={toggleWallet}>
                       <input type="hidden" name="address" value={w.address} />
-                      <button className="rounded-md border border-zinc-700 px-3 py-1 text-xs text-zinc-300 hover:bg-zinc-800">
+                      <Button variant="outline" size="sm">
                         {w.active ? "Pause" : "Resume"}
-                      </button>
+                      </Button>
                     </form>
                     <form action={removeWallet}>
                       <input type="hidden" name="address" value={w.address} />
-                      <button className="rounded-md border border-red-900/60 px-3 py-1 text-xs text-red-400 hover:bg-red-950/40">
+                      <Button variant="destructive" size="sm">
                         Remove
-                      </button>
+                      </Button>
                     </form>
                   </div>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
             {wallets.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-zinc-500">
+              <TableRow>
+                <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
                   No wallets yet — add one above.
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       </div>
-      <p className="text-xs text-zinc-500">
-        The tracker polls active wallets every ~30 minutes. Removing a wallet
+      <p className="text-xs text-muted-foreground">
+        The tracker polls active wallets every ~5 minutes. Removing a wallet
         that has signal history pauses it instead, so past stats stay intact.
       </p>
     </main>

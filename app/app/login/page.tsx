@@ -1,6 +1,8 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { AUTH_COOKIE, authToken } from "@/lib/auth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 async function login(formData: FormData) {
   "use server";
@@ -25,23 +27,17 @@ export default async function LoginPage({
 }) {
   const { error } = await searchParams;
   return (
-    <main className="flex min-h-screen items-center justify-center bg-zinc-950 text-zinc-100">
-      <form action={login} className="w-80 space-y-4 rounded-xl border border-zinc-800 bg-zinc-900 p-8">
-        <h1 className="text-xl font-semibold">Polybot</h1>
-        <p className="text-sm text-zinc-400">Enter the app password.</p>
+    <main className="flex min-h-screen items-center justify-center bg-background text-foreground">
+      <form action={login} className="w-80 space-y-4 rounded-lg border p-8">
+        <h1 className="font-mono text-sm font-semibold tracking-[0.2em] uppercase">
+          Polybot
+        </h1>
+        <p className="text-sm text-muted-foreground">Enter the app password.</p>
         {error && <p className="text-sm text-red-400">Wrong password.</p>}
-        <input
-          type="password"
-          name="password"
-          autoFocus
-          className="w-full rounded-md border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm outline-none focus:border-zinc-400"
-        />
-        <button
-          type="submit"
-          className="w-full rounded-md bg-zinc-100 py-2 text-sm font-medium text-zinc-900 hover:bg-white"
-        >
+        <Input type="password" name="password" autoFocus />
+        <Button type="submit" className="w-full">
           Sign in
-        </button>
+        </Button>
       </form>
     </main>
   );
